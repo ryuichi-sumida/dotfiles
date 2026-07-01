@@ -19,6 +19,12 @@ talk-intella() {
 
     bash "$repo/services/dialog-engine/scripts/kill_intella_process.sh"
 
+    # The repo script misses the bare `python3 -m intella` supervisor and the
+    # intella-asr service (which holds the GPU), so a stale ASR causes CUDA OOM
+    # on the next boot. Reap them here until the repo script covers them.
+    ps aux | grep -E '[p]ython3 -m intella($|[. ])|[i]ntella-asr/.*python3? app\.py|uv run .*python app\.py' \
+        | awk '{print $2}' | xargs -r kill -9 2>/dev/null
+
     export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/runtime-user}"
     export PULSE_SERVER="${PULSE_SERVER:-unix:${XDG_RUNTIME_DIR}/pulse/native}"
     export GST_PULSE_DEVICE="unity_out.monitor"
